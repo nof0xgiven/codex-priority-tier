@@ -14,6 +14,7 @@ use crate::telemetry::SseTelemetry;
 use codex_client::HttpTransport;
 use codex_client::RequestCompression;
 use codex_client::RequestTelemetry;
+use codex_protocol::config_types::ServiceTier;
 use codex_protocol::protocol::SessionSource;
 use http::HeaderMap;
 use http::HeaderValue;
@@ -35,6 +36,7 @@ pub struct ResponsesOptions {
     pub prompt_cache_key: Option<String>,
     pub text: Option<TextControls>,
     pub store_override: Option<bool>,
+    pub service_tier: Option<ServiceTier>,
     pub conversation_id: Option<String>,
     pub session_source: Option<SessionSource>,
     pub extra_headers: HeaderMap,
@@ -88,6 +90,7 @@ impl<T: HttpTransport, A: AuthProvider> ResponsesClient<T, A> {
             prompt_cache_key,
             text,
             store_override,
+            service_tier,
             conversation_id,
             session_source,
             extra_headers,
@@ -102,6 +105,7 @@ impl<T: HttpTransport, A: AuthProvider> ResponsesClient<T, A> {
             .include(include)
             .prompt_cache_key(prompt_cache_key)
             .text(text)
+            .service_tier(service_tier)
             .conversation(conversation_id)
             .session_source(session_source)
             .store_override(store_override)

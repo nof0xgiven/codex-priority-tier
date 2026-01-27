@@ -6,6 +6,7 @@ use crate::provider::Provider;
 use crate::requests::headers::build_conversation_headers;
 use crate::requests::headers::insert_header;
 use crate::requests::headers::subagent_header;
+use codex_protocol::config_types::ServiceTier;
 use codex_protocol::models::ResponseItem;
 use codex_protocol::protocol::SessionSource;
 use http::HeaderMap;
@@ -36,6 +37,7 @@ pub struct ResponsesRequestBuilder<'a> {
     include: Vec<String>,
     prompt_cache_key: Option<String>,
     text: Option<TextControls>,
+    service_tier: Option<ServiceTier>,
     conversation_id: Option<String>,
     session_source: Option<SessionSource>,
     store_override: Option<bool>,
@@ -75,6 +77,11 @@ impl<'a> ResponsesRequestBuilder<'a> {
 
     pub fn prompt_cache_key(mut self, key: Option<String>) -> Self {
         self.prompt_cache_key = key;
+        self
+    }
+
+    pub fn service_tier(mut self, service_tier: Option<ServiceTier>) -> Self {
+        self.service_tier = service_tier;
         self
     }
 
@@ -135,6 +142,7 @@ impl<'a> ResponsesRequestBuilder<'a> {
             store,
             stream: true,
             include: self.include,
+            service_tier: self.service_tier,
             prompt_cache_key: self.prompt_cache_key,
             text: self.text,
         };

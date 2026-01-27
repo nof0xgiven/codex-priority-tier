@@ -400,6 +400,7 @@ impl ModelClientSession {
             prompt_cache_key: Some(conversation_id.clone()),
             text,
             store_override: None,
+            service_tier: self.client.state.config.service_tier,
             conversation_id: Some(conversation_id),
             session_source: Some(self.client.state.session_source.clone()),
             extra_headers: build_responses_headers(
