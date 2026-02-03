@@ -6,6 +6,7 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
+use fs2::FileExt;
 use serde_json;
 use thiserror::Error;
 
@@ -100,10 +101,11 @@ fn append_locked_line(policy_path: &Path, line: &str) -> Result<(), AmendError> 
             path: policy_path.to_path_buf(),
             source,
         })?;
-    file.lock().map_err(|source| AmendError::LockPolicyFile {
-        path: policy_path.to_path_buf(),
-        source,
-    })?;
+    file.lock_exclusive()
+        .map_err(|source| AmendError::LockPolicyFile {
+            path: policy_path.to_path_buf(),
+            source,
+        })?;
 
     file.seek(SeekFrom::Start(0))
         .map_err(|source| AmendError::SeekPolicyFile {

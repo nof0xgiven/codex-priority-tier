@@ -28,6 +28,7 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
+use fs2::FileExt;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -128,7 +129,7 @@ pub(crate) async fn append_entry(
     tokio::task::spawn_blocking(move || -> Result<()> {
         // Retry a few times to avoid indefinite blocking when contended.
         for _ in 0..MAX_RETRIES {
-            match history_file.try_lock() {
+            match FileExt::try_lock_exclusive(&history_file) {
                 Ok(()) => {
                     // While holding the exclusive lock, write the full line.
                     // We do not open the file with `append(true)` on Windows, so ensure the
@@ -139,10 +140,10 @@ pub(crate) async fn append_entry(
                     enforce_history_limit(&mut history_file, history_max_bytes)?;
                     return Ok(());
                 }
-                Err(std::fs::TryLockError::WouldBlock) => {
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                     std::thread::sleep(RETRY_SLEEP);
                 }
-                Err(e) => return Err(e.into()),
+                Err(e) => return Err(e),
             }
         }
 
@@ -343,7 +344,7 @@ fn lookup_history_entry(path: &Path, log_id: u64, offset: usize) -> Option<Histo
     // Open & lock file for reading using a shared lock.
     // Retry a few times to avoid indefinite blocking.
     for _ in 0..MAX_RETRIES {
-        let lock_result = file.try_lock_shared();
+        let lock_result = FileExt::try_lock_shared(&file);
 
         match lock_result {
             Ok(()) => {
@@ -370,7 +371,7 @@ fn lookup_history_entry(path: &Path, log_id: u64, offset: usize) -> Option<Histo
                 // Not found at requested offset.
                 return None;
             }
-            Err(std::fs::TryLockError::WouldBlock) => {
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
                 std::thread::sleep(RETRY_SLEEP);
             }
             Err(e) => {
